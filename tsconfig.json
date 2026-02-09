@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "lib": ["DOM", "DOM.Iterable", "ES2020"],
+    "module": "ESNext",
+    "skipLibCheck": true,
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "declaration": true,
+    "declarationMap": true,
+    "baseUrl": ".",
+    "paths": {
+      "@types": ["src/types/index.ts"],
+      "@const": ["src/constants/index.ts"],
+      "@utils": ["src/utils/index.ts"],
+      "@core": ["src/core/index.ts"],
+      "@guards": ["src/guards/index.ts"],
+      "@devtools": ["src/devtools/index.ts"]
+    }
+  },
+  "include": ["src"]
+}
+

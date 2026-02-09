@@ -1,0 +1,148 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: system-ui, -apple-system, sans-serif;
+  background: #09090b;
+  color: #fafafa;
+  min-height: 100vh;
+}
+
+a {
+  color: #3b82f6;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.nav {
+  display: flex;
+  gap: 16px;
+  padding: 16px 24px;
+  background: #18181b;
+  border-bottom: 1px solid #27272a;
+}
+
+.nav a {
+  padding: 8px 16px;
+  border-radius: 6px;
+  transition: background 0.2s;
+}
+
+.nav a:hover {
+  background: #27272a;
+  text-decoration: none;
+}
+
+.nav a.active {
+  background: #3b82f6;
+  color: white;
+}
+
+.page {
+  padding: 48px 24px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.page h1 {
+  font-size: 2.5rem;
+  margin-bottom: 16px;
+  background: linear-gradient(135deg, #3b82f6, #60a5fa);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.page p {
+  color: #a1a1aa;
+  line-height: 1.6;
+  margin-bottom: 24px;
+}
+
+.card {
+  background: #18181b;
+  border: 1px solid #27272a;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 16px;
+}
+
+.btn {
+  display: inline-block;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.protected {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+}
+
+.badge {
+  display: inline-block;
+  padding: 4px 8px;
+  background: #3b82f620;
+  color: #60a5fa;
+  border-radius: 4px;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.badge.warning {
+  background: #f59e0b20;
+  color: #fbbf24;
+}
+
+.badge.success {
+  background: #10b98120;
+  color: #34d399;
+}
+
+.sub-nav {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  background: #18181b;
+  border-radius: 8px;
+  margin-bottom: 24px;
+}
+
+.sub-nav a {
+  padding: 8px 16px;
+  border-radius: 6px;
+  color: #a1a1aa;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.sub-nav a:hover {
+  background: #27272a;
+  color: #fafafa;
+  text-decoration: none;
+}
+
+.sub-nav a.active {
+  background: #3b82f6;
+  color: white;
+}
+
+.dashboard-content {
+  margin-top: 16px;
+}
+
