@@ -1,6 +1,6 @@
 {
   "name": "@forgedevstack/forge-compass",
-  "version": "1.0.0",
+  "version": "1.0.3",
   "publishConfig": {
     "access": "public"
   },
@@ -39,7 +39,8 @@
     "dev": "tsup --watch",
     "lint": "eslint src --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "react",
@@ -79,4 +80,3 @@
     "@forgedevstack/bear": "^1.0.0"
   }
 }
-

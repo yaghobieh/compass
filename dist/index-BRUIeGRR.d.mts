@@ -83,6 +83,7 @@ type NavigateOptions = {
     state?: unknown;
     preserveQuery?: boolean;
     preserveHash?: boolean;
+    skipHistoryUpdate?: boolean;
 };
 /** Router instance */
 type Router = {

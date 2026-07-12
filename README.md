@@ -1,4 +1,4 @@
-# 🧭 Forge Compass
+# Forge Compass
 
 Type-safe routing with guards, loaders, actions, middleware, and SSR support.
 
@@ -7,26 +7,36 @@ Type-safe routing with guards, loaders, actions, middleware, and SSR support.
 
 ## Features
 
-- 🛡️ **Guards & Permissions** - Route-level access control with async support
-- 📝 **Array-based Config** - Define routes with simple objects
-- 🔒 **Type-safe** - Full TypeScript support with inferred params
-- ⚡ **Lazy Loading** - Built-in code splitting support
-- 🧩 **Nested Routes** - Layouts, outlets, and nested guards
-- 🔧 **DevTools** - Real-time navigation debugging
-- 📦 **Route Loaders** - Data fetching with caching and revalidation
-- 📤 **Route Actions** - Form submissions with optimistic updates
-- 🔄 **Pending UI** - Loading states and navigation progress
-- ✨ **View Transitions** - Native browser View Transitions API
-- 🔗 **Middleware** - Pluggable request pipeline
-- 🪟 **Parallel Routes** - Multiple concurrent views
-- 🔍 **Route Search** - Fuzzy search and command palette
-- 🖥️ **SSR Support** - Server-side rendering utilities
+- **Guards and Permissions** - Route-level access control with async support
+- **Array-based Config** - Define routes with simple objects
+- **Type-safe** - Full TypeScript support with inferred params
+- **Lazy Loading** - Built-in code splitting support
+- **Nested Routes** - Layouts, outlets, and nested guards
+- **DevTools** - Real-time navigation debugging
+- **Route Loaders** - Data fetching with caching and revalidation
+- **Route Actions** - Form submissions with optimistic updates
+- **Pending UI** - Loading states and navigation progress
+- **View Transitions** - Native browser View Transitions API
+- **Middleware** - Pluggable request pipeline
+- **Parallel Routes** - Multiple concurrent views
+- **Route Search** - Fuzzy search and command palette
+- **SSR Support** - Server-side rendering utilities
 
 ## Installation
 
 ```bash
 npm install @forgedevstack/forge-compass
 ```
+
+### Local linking (development)
+
+To test your app against the local compass package:
+
+1. In the compass repo: `npm run build` then `cd /path/to/compass && npm link`
+2. In your app (e.g. grid-table portal): `npm link @forgedevstack/forge-compass`
+3. Import from the package root or the react subpath: `import { CompassProvider, Routes } from '@forgedevstack/forge-compass';` or `import { CompassProvider, Routes } from '@forgedevstack/forge-compass/react';`
+
+Both import styles are supported. Ensure the app has React and react-dom installed.
 
 ## Quick Start
 

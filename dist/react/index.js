@@ -19,7 +19,7 @@ var __export = (target, all) => {
 var VERSION, NUMBERS, DEFAULT_META, DEFAULT_CONFIG, ROUTE_PATTERNS;
 var init_constants = __esm({
   "src/constants/index.ts"() {
-    VERSION = "1.0.0" ;
+    VERSION = "1.0.3" ;
     NUMBERS = {
       MAX_HISTORY: 50,
       GUARD_TIMEOUT: 5e3,
@@ -365,7 +365,7 @@ var init_Router = __esm({
         if (typeof window === "undefined") return;
         const handlePopState = () => {
           const path = this.getCurrentPath();
-          this.navigateInternal(path, { replace: true });
+          this.navigateInternal(path, { replace: true, skipHistoryUpdate: true });
         };
         window.addEventListener("popstate", handlePopState);
         this.unlisten = () => window.removeEventListener("popstate", handlePopState);
@@ -382,7 +382,36 @@ var init_Router = __esm({
       }
       handleInitialRoute() {
         const path = this.getCurrentPath();
-        this.navigateInternal(path, { replace: true });
+        const { pathname, query, hash } = parsePath(path);
+        const match = matchRoute(this.routes, pathname);
+        if (!match) {
+          this.navigateInternal(path, { replace: true });
+          return;
+        }
+        const guards = match.matched.flatMap((r) => r.guards ?? []);
+        const hasGuards = guards.length > 0 || (this.config.defaultGuards?.length ?? 0) > 0;
+        if (hasGuards) {
+          this.navigateInternal(path, { replace: true });
+          return;
+        }
+        const context = createRouteContext(
+          buildPath(pathname, query, hash),
+          match.params,
+          match.route,
+          void 0
+        );
+        this.updateBrowserHistory(buildPath(pathname, query, hash), { replace: true });
+        const newHistory = [...this.state.history, context].slice(-NUMBERS.MAX_HISTORY);
+        this.updateState({
+          currentRoute: context,
+          previousRoute: null,
+          isNavigating: false,
+          history: newHistory
+        });
+        this.config.onNavigate?.(context, null);
+        this.handleScrollBehavior(context, null);
+        updateDocumentTitle(context.meta.title);
+        updateMetaTags(context.meta);
       }
       updateState(newState) {
         this.state = { ...this.state, ...newState };
@@ -492,7 +521,9 @@ var init_Router = __esm({
           await this.navigateInternal(match.route.redirect, { replace: true });
           return;
         }
-        this.updateBrowserHistory(buildPath(pathname, query, hash), options);
+        if (!options.skipHistoryUpdate) {
+          this.updateBrowserHistory(buildPath(pathname, query, hash), options);
+        }
         const newHistory = [...this.state.history, context].slice(-NUMBERS.MAX_HISTORY);
         this.updateState({
           currentRoute: context,

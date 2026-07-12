@@ -19,7 +19,7 @@ var __export = (target, all) => {
 var VERSION, NUMBERS;
 var init_constants = __esm({
   "src/constants/index.ts"() {
-    VERSION = "1.0.0" ;
+    VERSION = "1.0.3" ;
     NUMBERS = {
       MAX_HISTORY: 50,
       GUARD_TIMEOUT: 5e3,

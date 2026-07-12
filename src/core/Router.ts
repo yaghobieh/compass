@@ -72,7 +72,7 @@ export class CompassRouter {
 
     const handlePopState = () => {
       const path = this.getCurrentPath();
-      this.navigateInternal(path, { replace: true });
+      this.navigateInternal(path, { replace: true, skipHistoryUpdate: true });
     };
 
     window.addEventListener('popstate', handlePopState);
@@ -97,7 +97,40 @@ export class CompassRouter {
 
   private handleInitialRoute(): void {
     const path = this.getCurrentPath();
-    this.navigateInternal(path, { replace: true });
+    const { pathname, query, hash } = parsePath(path);
+    const match = matchRoute(this.routes, pathname);
+
+    if (!match) {
+      this.navigateInternal(path, { replace: true });
+      return;
+    }
+
+    const guards = match.matched.flatMap((r) => r.guards ?? []);
+    const hasGuards = guards.length > 0 || (this.config.defaultGuards?.length ?? 0) > 0;
+
+    if (hasGuards) {
+      this.navigateInternal(path, { replace: true });
+      return;
+    }
+
+    const context = createRouteContext(
+      buildPath(pathname, query, hash),
+      match.params,
+      match.route,
+      undefined
+    );
+    this.updateBrowserHistory(buildPath(pathname, query, hash), { replace: true });
+    const newHistory = [...this.state.history, context].slice(-NUMBERS.MAX_HISTORY);
+    this.updateState({
+      currentRoute: context,
+      previousRoute: null,
+      isNavigating: false,
+      history: newHistory,
+    });
+    this.config.onNavigate?.(context, null);
+    this.handleScrollBehavior(context, null);
+    updateDocumentTitle(context.meta.title);
+    updateMetaTags(context.meta);
   }
 
   private updateState(newState: Partial<RouterState>): void {
@@ -233,7 +266,9 @@ export class CompassRouter {
       return;
     }
 
-    this.updateBrowserHistory(buildPath(pathname, query, hash), options);
+    if (!options.skipHistoryUpdate) {
+      this.updateBrowserHistory(buildPath(pathname, query, hash), options);
+    }
 
     const newHistory = [...this.state.history, context].slice(-NUMBERS.MAX_HISTORY);
 
