@@ -19,7 +19,7 @@ var __export = (target, all) => {
 var VERSION, NUMBERS, DEFAULT_META, DEFAULT_CONFIG, ROUTE_PATTERNS;
 var init_constants = __esm({
   "src/constants/index.ts"() {
-    VERSION = "1.0.3" ;
+    VERSION = "1.0.4" ;
     NUMBERS = {
       MAX_HISTORY: 50,
       GUARD_TIMEOUT: 5e3,
@@ -52,7 +52,7 @@ var init_constants = __esm({
 });
 
 // src/utils/index.ts
-var generateId, parsePath, buildPath, matchPath, matchRoute, joinPaths, resolvePath, createRouteContext, findRouteByName, scrollToTop, updateDocumentTitle, updateMetaTags;
+var generateId, parsePath, buildPath, matchPath, canMatchAllows, matchRoute, joinPaths, resolvePath, createRouteContext, findRouteByName, scrollToTop, updateDocumentTitle, updateMetaTags;
 var init_utils = __esm({
   "src/utils/index.ts"() {
     init_constants();
@@ -138,11 +138,27 @@ var init_utils = __esm({
       }
       return { matched: true, params };
     };
+    canMatchAllows = (route, pathname) => {
+      if (route.canMatch == null) return true;
+      const list = Array.isArray(route.canMatch) ? route.canMatch : [route.canMatch];
+      for (const hook of list) {
+        if (typeof hook !== "function") continue;
+        try {
+          const result = hook(pathname, route);
+          if (result === false) return false;
+          if (result && typeof result === "object" && "allowed" in result && result.allowed === false) {
+            return false;
+          }
+        } catch {
+        }
+      }
+      return true;
+    };
     matchRoute = (routes2, pathname, parentPath = "") => {
       for (const route of routes2) {
         const fullPath = joinPaths(parentPath, route.path);
         const { matched, params } = matchPath(fullPath, pathname);
-        if (matched) {
+        if (matched && canMatchAllows(route, pathname)) {
           if (route.children && route.children.length > 0) {
             const childMatch = matchRoute(route.children, pathname, fullPath);
             if (childMatch) {
@@ -356,6 +372,21 @@ var init_Router = __esm({
       get routes() {
         return this._routes;
       }
+      guardsFor(route) {
+        const guards = [...route.guards ?? []];
+        if (typeof route.fn === "string" && !guards.includes(route.fn)) {
+          guards.push(route.fn);
+        }
+        return guards;
+      }
+      leaveGuards(route) {
+        if (route.canDeactivate == null) return [];
+        const list = Array.isArray(route.canDeactivate) ? route.canDeactivate : [route.canDeactivate];
+        return list.filter((hook) => {
+          if (typeof hook === "function" || typeof hook === "string") return true;
+          return !!hook && typeof hook === "object" && "check" in hook && "name" in hook;
+        });
+      }
       registerForDevTools() {
         if (typeof window !== "undefined") {
           window.__FORGE_COMPASS_ROUTER__ = this;
@@ -388,7 +419,7 @@ var init_Router = __esm({
           this.navigateInternal(path, { replace: true });
           return;
         }
-        const guards = match.matched.flatMap((r) => r.guards ?? []);
+        const guards = match.matched.flatMap((r) => this.guardsFor(r));
         const hasGuards = guards.length > 0 || (this.config.defaultGuards?.length ?? 0) > 0;
         if (hasGuards) {
           this.navigateInternal(path, { replace: true });
@@ -506,7 +537,18 @@ var init_Router = __esm({
           match.route,
           options.state
         );
-        const guards = match.matched.flatMap((r) => r.guards ?? []);
+        if (previousRoute) {
+          const previousMatch = matchRoute(this.routes, previousRoute.path);
+          const leaving = previousMatch?.matched.flatMap((route) => this.leaveGuards(route)) ?? [];
+          if (leaving.length > 0) {
+            const leaveResult = await this.runGuards(leaving, previousRoute);
+            if (!leaveResult.passed) {
+              this.updateState({ isNavigating: false });
+              return;
+            }
+          }
+        }
+        const guards = match.matched.flatMap((r) => this.guardsFor(r));
         const { passed, result } = await this.runGuards(guards, context);
         if (!passed) {
           this.updateState({ isNavigating: false });
@@ -1232,6 +1274,13 @@ init_CompassContext();
 init_CompassContext();
 init_utils();
 
+// src/utils/componentRegistry.ts
+var registry = /* @__PURE__ */ new Map();
+var resolveComponentRef = (component) => {
+  if (typeof component !== "string") return component;
+  return registry.get(component) ?? component;
+};
+
 // src/adapters/react/Route.tsx
 var Route = (_props) => {
   return null;
@@ -1248,6 +1297,11 @@ var routeFromProps = (props) => ({
   layout: props.layout,
   fallback: props.fallback
 });
+var asView = (component) => {
+  const resolved = resolveComponentRef(component);
+  if (!resolved || typeof resolved === "string") return null;
+  return resolved;
+};
 var extractRoutesFromChildren = (children) => {
   const routes2 = [];
   react.Children.forEach(children, (child) => {
@@ -1291,8 +1345,8 @@ var Routes = ({ children, fallback }) => {
   const match = matchRoute(routes2, currentRoute.path);
   if (!match) {
     const notFound = routes2.find((r) => r.path === "*");
-    if (notFound?.component) {
-      const NotFoundComponent = notFound.component;
+    const NotFoundComponent = notFound ? asView(notFound.component) : null;
+    if (NotFoundComponent) {
       return /* @__PURE__ */ jsxRuntime.jsx(react.Suspense, { fallback: fallback || /* @__PURE__ */ jsxRuntime.jsx("div", { children: "Loading..." }), children: /* @__PURE__ */ jsxRuntime.jsx(NotFoundComponent, { route: currentRoute }) });
     }
     return /* @__PURE__ */ jsxRuntime.jsx("div", { children: "404 - Page Not Found" });
@@ -1301,8 +1355,8 @@ var Routes = ({ children, fallback }) => {
     if (route.element) {
       return /* @__PURE__ */ jsxRuntime.jsx(react.Suspense, { fallback: route.fallback || fallback || /* @__PURE__ */ jsxRuntime.jsx("div", { children: "Loading..." }), children: route.element }, index);
     }
-    if (route.component) {
-      const Component2 = route.component;
+    const Component2 = asView(route.component);
+    if (Component2) {
       return /* @__PURE__ */ jsxRuntime.jsx(react.Suspense, { fallback: route.fallback || fallback || /* @__PURE__ */ jsxRuntime.jsx("div", { children: "Loading..." }), children: /* @__PURE__ */ jsxRuntime.jsx(Component2, { route: currentRoute, children: route.children && route.children.map(renderRoute) }) }, index);
     }
     return null;
@@ -1314,8 +1368,8 @@ var Routes = ({ children, fallback }) => {
   let result = null;
   for (let i = matchedRoutes.length - 1; i >= 0; i--) {
     const route = matchedRoutes[i];
-    if (route.layout) {
-      const Layout = route.layout;
+    const Layout = asView(route.layout);
+    if (Layout) {
       result = /* @__PURE__ */ jsxRuntime.jsx(react.Suspense, { fallback: route.fallback || fallback || /* @__PURE__ */ jsxRuntime.jsx("div", { children: "Loading..." }), children: /* @__PURE__ */ jsxRuntime.jsx(Layout, { route: currentRoute, children: result || renderRoute(route, i) }) });
     } else if (!result) {
       result = renderRoute(route, i);
@@ -1418,8 +1472,9 @@ var Outlet = ({ fallback }) => {
   if (childRoute.element) {
     return /* @__PURE__ */ jsxRuntime.jsx(react.Suspense, { fallback: fallback || /* @__PURE__ */ jsxRuntime.jsx("div", { children: "Loading..." }), children: childRoute.element });
   }
-  if (childRoute.component) {
-    const Component2 = childRoute.component;
+  const resolved = resolveComponentRef(childRoute.component);
+  if (resolved && typeof resolved !== "string") {
+    const Component2 = resolved;
     return /* @__PURE__ */ jsxRuntime.jsx(react.Suspense, { fallback: fallback || /* @__PURE__ */ jsxRuntime.jsx("div", { children: "Loading..." }), children: /* @__PURE__ */ jsxRuntime.jsx(Component2, { route }) });
   }
   return null;

@@ -3,7 +3,14 @@ import type { ReactNode, ComponentType } from 'react';
 import { useCompassContext } from './CompassContext';
 import type { RouteConfig, RouteComponentProps, RouteProps } from '../../types';
 import { matchRoute } from '../../utils';
+import { resolveComponentRef } from '../../utils/componentRegistry';
 import { routeFromProps } from './Route';
+
+const asView = (component: unknown): ComponentType<RouteComponentProps> | null => {
+  const resolved = resolveComponentRef(component);
+  if (!resolved || typeof resolved === 'string') return null;
+  return resolved as ComponentType<RouteComponentProps>;
+};
 
 export type RoutesProps = {
   children?: ReactNode;
@@ -62,8 +69,8 @@ export const Routes = ({ children, fallback }: RoutesProps): JSX.Element | null 
 
   if (!match) {
     const notFound = routes.find((r) => r.path === '*');
-    if (notFound?.component) {
-      const NotFoundComponent = notFound.component as ComponentType<RouteComponentProps>;
+    const NotFoundComponent = notFound ? asView(notFound.component) : null;
+    if (NotFoundComponent) {
       return (
         <Suspense fallback={fallback || <div>Loading...</div>}>
           <NotFoundComponent route={currentRoute} />
@@ -80,8 +87,8 @@ export const Routes = ({ children, fallback }: RoutesProps): JSX.Element | null 
       </Suspense>;
     }
 
-    if (route.component) {
-      const Component = route.component as ComponentType<RouteComponentProps>;
+    const Component = asView(route.component);
+    if (Component) {
       return (
         <Suspense key={index} fallback={route.fallback || fallback || <div>Loading...</div>}>
           <Component route={currentRoute}>
@@ -105,8 +112,8 @@ export const Routes = ({ children, fallback }: RoutesProps): JSX.Element | null 
   for (let i = matchedRoutes.length - 1; i >= 0; i--) {
     const route = matchedRoutes[i];
     
-    if (route.layout) {
-      const Layout = route.layout as ComponentType<RouteComponentProps>;
+    const Layout = asView(route.layout);
+    if (Layout) {
       result = (
         <Suspense fallback={route.fallback || fallback || <div>Loading...</div>}>
           <Layout route={currentRoute}>

@@ -1,4 +1,4 @@
-import type { RouterConfig, RouteMeta } from '../types';
+import type { CoreRouterConfig, RouteMeta } from '../types/core';
 
 declare const __FORGE_COMPASS_VERSION__: string;
 
@@ -23,7 +23,7 @@ export const DEFAULT_META: RouteMeta = {
   keywords: [],
 };
 
-export const DEFAULT_CONFIG: Partial<RouterConfig> = {
+export const DEFAULT_CONFIG: Partial<CoreRouterConfig> = {
   routes: [],
   basePath: '',
   mode: 'history',

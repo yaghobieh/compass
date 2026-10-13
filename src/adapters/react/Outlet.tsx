@@ -4,6 +4,7 @@ import { matchRoute } from '../../utils';
 import { Suspense } from 'react';
 import type { ComponentType } from 'react';
 import type { RouteComponentProps } from '../../types';
+import { resolveComponentRef } from '../../utils/componentRegistry';
 
 export type OutletProps = {
   fallback?: ReactNode;
@@ -32,8 +33,9 @@ export const Outlet = ({ fallback }: OutletProps): JSX.Element | null => {
     );
   }
 
-  if (childRoute.component) {
-    const Component = childRoute.component as ComponentType<RouteComponentProps>;
+  const resolved = resolveComponentRef(childRoute.component);
+  if (resolved && typeof resolved !== 'string') {
+    const Component = resolved as ComponentType<RouteComponentProps>;
     return (
       <Suspense fallback={fallback || <div>Loading...</div>}>
         <Component route={route} />

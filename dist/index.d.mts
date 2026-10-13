@@ -1,6 +1,10 @@
-export { C as CommandPalette, a as CompassProvider, b as CompassRouter, I as InterceptingRoute, L as Link, N as NavLink, c as Navigate, O as Outlet, P as ParallelOutlet, d as ParallelRoutesProvider, e as ProgressBar, R as Route, f as RouteAnnouncer, g as RouteErrorBoundary, h as Routes, T as Transition, V as ViewTransitionLink, i as analyticsMiddleware, j as buildTypedPath, k as clearMiddleware, l as createAction, m as createLoader, n as createMiddleware, o as createRouter, p as createTypedRoute, q as defineRoute, r as loggerMiddleware, s as registerMiddleware, t as runMiddleware, u as typedRoutes, v as useAction, w as useBlocker, x as useBreadcrumbs, y as useFocus, z as useGuard, A as useInterceptedRoute, B as useIntersectionPrefetch, D as useLoaderData, E as useMiddleware, F as useNavigate, G as useNavigation, H as useParallelRoutes, J as useParams, K as usePendingLocation, M as usePrefetch, Q as useQuery, S as useQueryParam, U as useQueryState, W as useRoute, X as useRouteMatch, Y as useRouteSearch, Z as useRouter, _ as useScrollRestoration, $ as useSlot, a0 as useTypedParams, a1 as useTypedQuery, a2 as useViewTransition } from './index-By6jJpvt.mjs';
-import { Q as QueryParams, R as RouteConfig, a as RouteParams, M as MatchResult, G as Guard, d as GuardFn, e as RouteMeta, f as RouteComponent, g as RouteGroupConfig, b as RouteContext, h as GuardResult } from './index-BRUIeGRR.mjs';
-export { A as ActionContext, i as ActionFn, j as ActionResult, B as BlockerFn, k as BlockerState, l as BreadcrumbItem, C as CompassLogEntry, m as CompassProviderConfig, n as CompassProviderConfigExtended, D as DevToolsCallback, F as FocusTarget, L as LinkProps, o as LoaderContext, p as LoaderFn, q as MiddlewareContext, r as MiddlewareFn, s as MiddlewareNext, N as NavigateOptions, t as NavigationEvent, u as NavigationState, P as PrefetchOptions, v as QueryStateOptions, w as RevalidationContext, x as RouteComponentProps, y as RouteConfigWithLoader, z as RouteProps, E as RouteSearchResult, H as Router, I as RouterConfig, J as RouterListener, K as RouterState, S as SSRContext, c as SSRRenderResult, O as ScrollPosition, T as TransitionConfig, V as ViewTransitionOptions } from './index-BRUIeGRR.mjs';
+export { C as CompassRouter, c as createRouter } from './Router-BBCgAzWl.mjs';
+import { R as RouteConfig, a as RouteGroupConfig } from './index-oPSUCVUi.mjs';
+export { C as CompassProviderConfig, b as CompassProviderConfigExtended, L as LinkProps, c as RouteComponent, d as RouteComponentProps, e as RouteConfigWithLoader, f as RouteProps, g as RouteSearchResult, h as Router, i as RouterConfig } from './index-oPSUCVUi.mjs';
+import { Q as QueryParams, C as CoreRouteConfig, R as RouteParams, k as MatchResult, G as Guard, d as GuardFn, e as RouteMeta, a as RouteContext, g as GuardResult } from './core-DKMffvjs.mjs';
+export { l as ActionContext, A as ActionFn, m as ActionResult, B as BlockerFn, n as BlockerState, o as BreadcrumbItem, p as CompassLogEntry, c as CoreRouterConfig, D as DevToolsCallback, F as FocusTarget, q as LoaderContext, L as LoaderFn, r as MiddlewareContext, M as MiddlewareFn, s as MiddlewareNext, N as NavigateOptions, t as NavigationEvent, u as NavigationState, P as PrefetchOptions, v as QueryStateOptions, f as RevalidationContext, j as RouteFn, i as RouterListener, h as RouterState, S as SSRContext, b as SSRRenderResult, w as ScrollPosition, T as TransitionConfig, V as ViewTransitionOptions } from './core-DKMffvjs.mjs';
+export { c as createRoute, g as getComponent, r as registerComponent, a as resolveRouteComponents } from './componentRegistry-BNmPMCWv.mjs';
+export { CommandPalette, CompassProvider, InterceptingRoute, Link, NavLink, Navigate, Outlet, ParallelOutlet, ParallelRoutesProvider, ProgressBar, Route, RouteAnnouncer, RouteErrorBoundary, Routes, Transition, ViewTransitionLink, analyticsMiddleware, buildTypedPath, clearMiddleware, createAction, createLoader, createMiddleware, createTypedRoute, defineRoute, loggerMiddleware, registerMiddleware, runMiddleware, typedRoutes, useAction, useBlocker, useBreadcrumbs, useFocus, useGuard, useInterceptedRoute, useIntersectionPrefetch, useLoaderData, useMiddleware, useNavigate, useNavigation, useParallelRoutes, useParams, usePendingLocation, usePrefetch, useQuery, useQueryParam, useQueryState, useRoute, useRouteMatch, useRouteSearch, useRouter, useScrollRestoration, useSlot, useTypedParams, useTypedQuery, useViewTransition } from './react/index.mjs';
 import 'react';
 import 'react/jsx-runtime';
 
@@ -24,21 +28,28 @@ declare const matchPath: (pattern: string, pathname: string) => {
     matched: boolean;
     params: RouteParams;
 };
-declare const matchRoute: (routes: RouteConfig[], pathname: string, parentPath?: string) => MatchResult;
+declare const matchRoute: <T extends CoreRouteConfig>(routes: T[], pathname: string, parentPath?: string) => MatchResult<T>;
 declare const joinPaths: (...paths: string[]) => string;
 declare const resolvePath: (pattern: string, params?: RouteParams) => string;
-declare const flattenRoutes: (routes: RouteConfig[], parentPath?: string) => Array<RouteConfig & {
+declare const flattenRoutes: <T extends CoreRouteConfig>(routes: T[], parentPath?: string) => Array<T & {
     fullPath: string;
 }>;
-declare const findRouteByName: (routes: RouteConfig[], name: string) => RouteConfig | null;
+declare const findRouteByName: <T extends CoreRouteConfig>(routes: T[], name: string) => T | null;
 
 declare const routeGroup: (config: RouteGroupConfig) => RouteConfig[];
 declare const mergeRouteGroups: (...groups: RouteConfig[][]) => RouteConfig[];
-declare const createRoute: (path: string, component: RouteComponent, options?: Partial<Omit<RouteConfig, "path" | "component">>) => RouteConfig;
 declare const createRedirect: (from: string, to: string, options?: {
     guards?: (Guard | GuardFn | string)[];
     meta?: RouteMeta;
 }) => RouteConfig;
+
+type ParsedRouteSpec = {
+    name: string;
+    fn: string;
+    path: string;
+    component: string;
+};
+declare const parseRouteSpec: (spec: string) => ParsedRouteSpec;
 
 /**
  * Create a named guard with optional deny handler
@@ -81,4 +92,4 @@ declare const anyGuard: (guards: Guard[], name?: string) => Guard;
  */
 declare const notGuard: (guard: Guard, name?: string) => Guard;
 
-export { GUARD_RESULTS, Guard, GuardFn, GuardResult, MatchResult, QueryParams, RouteComponent, RouteConfig, RouteContext, RouteGroupConfig, RouteMeta, RouteParams, VERSION, anyGuard, authGuard, buildPath, combineGuards, conditionalGuard, createGuard, createRedirect, createRoute, featureGuard, findRouteByName, flattenRoutes, joinPaths, matchPath, matchRoute, mergeRouteGroups, notGuard, parsePath, permissionGuard, rateLimitGuard, resolvePath, roleGuard, routeGroup };
+export { CoreRouteConfig, GUARD_RESULTS, Guard, GuardFn, GuardResult, MatchResult, QueryParams, RouteConfig, RouteContext, RouteGroupConfig, RouteMeta, RouteParams, VERSION, anyGuard, authGuard, buildPath, combineGuards, conditionalGuard, createGuard, createRedirect, featureGuard, findRouteByName, flattenRoutes, joinPaths, matchPath, matchRoute, mergeRouteGroups, notGuard, parsePath, parseRouteSpec, permissionGuard, rateLimitGuard, resolvePath, roleGuard, routeGroup };
