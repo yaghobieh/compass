@@ -1,7 +1,7 @@
 import type {
-  RouterConfig,
+  CoreRouterConfig,
+  CoreRouteConfig,
   RouterState,
-  RouteConfig,
   RouteContext,
   RouteParams,
   NavigateOptions,
@@ -11,7 +11,7 @@ import type {
   CompassLogEntry,
   RouterListener,
   DevToolsCallback,
-} from '../types';
+} from '../types/core';
 import { DEFAULT_CONFIG, NUMBERS } from '../constants';
 import {
   matchRoute,
@@ -26,16 +26,16 @@ import {
   generateId,
 } from '../utils';
 
-export class CompassRouter {
-  private config: RouterConfig;
+export class CompassRouter<TRoute extends CoreRouteConfig = CoreRouteConfig> {
+  private config: CoreRouterConfig<TRoute>;
   private state: RouterState;
   private listeners: Set<RouterListener> = new Set();
   private devToolsCallback: DevToolsCallback | null = null;
   private guardRegistry: Map<string, Guard> = new Map();
   private unlisten: (() => void) | null = null;
-  private _routes: RouteConfig[];
+  private _routes: TRoute[];
 
-  constructor(config: RouterConfig) {
+  constructor(config: CoreRouterConfig<TRoute>) {
     this._routes = config.routes || [];
     this.config = { 
       ...DEFAULT_CONFIG, 
@@ -56,8 +56,25 @@ export class CompassRouter {
     this.handleInitialRoute();
   }
 
-  private get routes(): RouteConfig[] {
+  private get routes(): TRoute[] {
     return this._routes;
+  }
+
+  private guardsFor(route: CoreRouteConfig): (Guard | GuardFn | string)[] {
+    const guards = [...(route.guards ?? [])];
+    if (typeof route.fn === 'string' && !guards.includes(route.fn)) {
+      guards.push(route.fn);
+    }
+    return guards;
+  }
+
+  private leaveGuards(route: CoreRouteConfig): (Guard | GuardFn | string)[] {
+    if (route.canDeactivate == null) return [];
+    const list = Array.isArray(route.canDeactivate) ? route.canDeactivate : [route.canDeactivate];
+    return list.filter((hook): hook is Guard | GuardFn | string => {
+      if (typeof hook === 'function' || typeof hook === 'string') return true;
+      return !!hook && typeof hook === 'object' && 'check' in hook && 'name' in hook;
+    });
   }
 
   private registerForDevTools(): void {
@@ -105,7 +122,7 @@ export class CompassRouter {
       return;
     }
 
-    const guards = match.matched.flatMap((r) => r.guards ?? []);
+    const guards = match.matched.flatMap((r) => this.guardsFor(r));
     const hasGuards = guards.length > 0 || (this.config.defaultGuards?.length ?? 0) > 0;
 
     if (hasGuards) {
@@ -247,7 +264,19 @@ export class CompassRouter {
       options.state
     );
 
-    const guards = match.matched.flatMap((r) => r.guards ?? []);
+    if (previousRoute) {
+      const previousMatch = matchRoute(this.routes, previousRoute.path);
+      const leaving = previousMatch?.matched.flatMap((route) => this.leaveGuards(route)) ?? [];
+      if (leaving.length > 0) {
+        const leaveResult = await this.runGuards(leaving, previousRoute);
+        if (!leaveResult.passed) {
+          this.updateState({ isNavigating: false });
+          return;
+        }
+      }
+    }
+
+    const guards = match.matched.flatMap((r) => this.guardsFor(r));
     const { passed, result } = await this.runGuards(guards, context);
 
     if (!passed) {
@@ -356,11 +385,11 @@ export class CompassRouter {
     return this.state;
   };
 
-  getRoutes = (): RouteConfig[] => {
+  getRoutes = (): TRoute[] => {
     return this.routes;
   };
 
-  addRoute = (route: RouteConfig, parentName?: string): void => {
+  addRoute = (route: TRoute, parentName?: string): void => {
     if (parentName) {
       const parent = findRouteByName(this.routes, parentName);
       if (parent) {
@@ -373,13 +402,13 @@ export class CompassRouter {
   };
 
   removeRoute = (name: string): void => {
-    const removeFromArray = (routes: RouteConfig[]): boolean => {
+    const removeFromArray = (routes: TRoute[]): boolean => {
       const index = routes.findIndex((r) => r.name === name);
       if (index !== -1) {
         routes.splice(index, 1);
         return true;
       }
-      return routes.some((r) => r.children && removeFromArray(r.children));
+      return routes.some((r) => r.children && removeFromArray(r.children as TRoute[]));
     };
     removeFromArray(this.routes);
   };
@@ -418,7 +447,9 @@ export class CompassRouter {
   };
 }
 
-export const createRouter = (config: RouterConfig): CompassRouter => {
+export const createRouter = <TRoute extends CoreRouteConfig = CoreRouteConfig>(
+  config: CoreRouterConfig<TRoute>
+): CompassRouter<TRoute> => {
   return new CompassRouter(config);
 };
 

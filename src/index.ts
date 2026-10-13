@@ -19,7 +19,10 @@ export {
   findRouteByName,
 } from './utils';
 
-export { routeGroup, mergeRouteGroups, createRoute, createRedirect } from './utils/routeGroup';
+export { routeGroup, mergeRouteGroups, createRedirect } from './utils/routeGroup';
+export { createRoute } from './utils/createRoute';
+export { registerComponent, getComponent, resolveRouteComponents } from './utils/componentRegistry';
+export { parseRouteSpec } from './utils/routeSpec';
 
 // Guards
 export {

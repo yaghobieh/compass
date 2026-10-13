@@ -1,6 +1,6 @@
 {
   "name": "@forgedevstack/forge-compass",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "publishConfig": {
     "access": "public"
   },
@@ -28,17 +28,34 @@
       "types": "./dist/server/index.d.ts",
       "import": "./dist/server/index.mjs",
       "require": "./dist/server/index.js"
+    },
+    "./vue": {
+      "types": "./dist/vue/index.d.ts",
+      "import": "./dist/vue/index.mjs",
+      "require": "./dist/vue/index.js"
+    },
+    "./angular": {
+      "types": "./dist/angular/index.d.ts",
+      "import": "./dist/angular/index.mjs",
+      "require": "./dist/angular/index.js"
+    },
+    "./svelte": {
+      "types": "./dist/svelte/index.d.ts",
+      "import": "./dist/svelte/index.mjs",
+      "require": "./dist/svelte/index.js"
     }
   },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
     "lint": "eslint src --ext .ts,.tsx",
     "typecheck": "tsc --noEmit",
+    "test": "node scripts/test-create-route.mjs",
     "clean": "rm -rf dist",
     "prepublishOnly": "npm run build"
   },
@@ -55,7 +72,10 @@
     "middleware",
     "ssr",
     "view-transitions",
-    "parallel-routes"
+    "parallel-routes",
+    "vue",
+    "angular",
+    "svelte"
   ],
   "author": "ForgeStack",
   "license": "MIT",
@@ -66,7 +86,21 @@
   "homepage": "https://forgedevstack.com",
   "peerDependencies": {
     "react": ">=17.0.0",
-    "react-dom": ">=17.0.0"
+    "react-dom": ">=17.0.0",
+    "vue": ">=3.2.0",
+    "@angular/core": ">=14.0.0",
+    "svelte": ">=4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "vue": {
+      "optional": true
+    },
+    "@angular/core": {
+      "optional": true
+    },
+    "svelte": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/react": "^18.2.0",

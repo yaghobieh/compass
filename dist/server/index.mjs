@@ -69,11 +69,27 @@ var matchPath = (pattern, pathname) => {
   }
   return { matched: true, params };
 };
+var canMatchAllows = (route, pathname) => {
+  if (route.canMatch == null) return true;
+  const list = Array.isArray(route.canMatch) ? route.canMatch : [route.canMatch];
+  for (const hook of list) {
+    if (typeof hook !== "function") continue;
+    try {
+      const result = hook(pathname, route);
+      if (result === false) return false;
+      if (result && typeof result === "object" && "allowed" in result && result.allowed === false) {
+        return false;
+      }
+    } catch {
+    }
+  }
+  return true;
+};
 var matchRoute = (routes, pathname, parentPath = "") => {
   for (const route of routes) {
     const fullPath = joinPaths(parentPath, route.path);
     const { matched, params } = matchPath(fullPath, pathname);
-    if (matched) {
+    if (matched && canMatchAllows(route, pathname)) {
       if (route.children && route.children.length > 0) {
         const childMatch = matchRoute(route.children, pathname, fullPath);
         if (childMatch) {

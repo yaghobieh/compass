@@ -1,4 +1,4 @@
-import type { RouteConfig, RouteGroupConfig, Guard, GuardFn, RouteComponent, RouteMeta } from '../types';
+import type { RouteConfig, RouteGroupConfig, Guard, GuardFn, RouteMeta } from '../types';
 
 export const routeGroup = (config: RouteGroupConfig): RouteConfig[] => {
   const { guards, layout, meta, fallback, errorBoundary, children } = config;
@@ -23,16 +23,6 @@ export const routeGroup = (config: RouteGroupConfig): RouteConfig[] => {
 export const mergeRouteGroups = (...groups: RouteConfig[][]): RouteConfig[] => {
   return groups.flat();
 };
-
-export const createRoute = (
-  path: string,
-  component: RouteComponent,
-  options?: Partial<Omit<RouteConfig, 'path' | 'component'>>
-): RouteConfig => ({
-  path,
-  component,
-  ...options,
-});
 
 export const createRedirect = (
   from: string,

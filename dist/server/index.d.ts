@@ -1,4 +1,5 @@
-import { R as RouteConfig, S as SSRContext, a as RouteParams, b as RouteContext, c as SSRRenderResult } from '../index-BRUIeGRR.js';
+import { R as RouteConfig } from '../index-BL1otzyT.js';
+import { S as SSRContext, R as RouteParams, a as RouteContext, b as SSRRenderResult } from '../core-DKMffvjs.js';
 import 'react';
 
 declare const createSSRContext: (url: string, routes: RouteConfig[]) => SSRContext;

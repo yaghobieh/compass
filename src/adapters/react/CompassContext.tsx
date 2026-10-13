@@ -1,12 +1,12 @@
 import { createContext, useContext, useEffect, useState, useCallback, useMemo, lazy, Suspense } from 'react';
 import type { ReactNode } from 'react';
 import { CompassRouter, createRouter } from '../../core/Router';
-import type { RouterState, RouteContext, RouteParams, QueryParams, NavigateOptions, CompassProviderConfig } from '../../types';
+import type { RouterState, RouteContext, RouteParams, QueryParams, NavigateOptions, CompassProviderConfig, RouteConfig } from '../../types';
 import { ProgressBar } from './ProgressBar';
 import { RouteAnnouncer } from './RouteAnnouncer';
 
 type CompassContextValue = {
-  router: CompassRouter;
+  router: CompassRouter<RouteConfig>;
   state: RouterState;
   devToolsEnabled: boolean;
   config: CompassProviderConfig;
@@ -36,7 +36,7 @@ export const CompassProvider = ({
   transitionDuration,
   ...config 
 }: CompassProviderProps): JSX.Element => {
-  const [router] = useState(() => createRouter(config));
+  const [router] = useState(() => createRouter<RouteConfig>(config));
   const [state, setState] = useState<RouterState>(router.getState());
 
   const fullConfig: CompassProviderConfig = {
@@ -87,7 +87,7 @@ export const useCompassContext = (): CompassContextValue => {
   return context;
 };
 
-export const useRouter = (): CompassRouter => {
+export const useRouter = (): CompassRouter<RouteConfig> => {
   const { router } = useCompassContext();
   return router;
 };

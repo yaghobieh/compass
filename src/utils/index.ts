@@ -1,4 +1,4 @@
-import type { RouteConfig, RouteParams, QueryParams, RouteContext, MatchResult } from '../types';
+import type { CoreRouteConfig, RouteParams, QueryParams, RouteContext, MatchResult } from '../types/core';
 import { ROUTE_PATTERNS, DEFAULT_META } from '../constants';
 
 export const generateId = (): string => Math.random().toString(36).substring(2, 11);
@@ -111,18 +111,36 @@ export const matchPath = (
   return { matched: true, params };
 };
 
-export const matchRoute = (
-  routes: RouteConfig[],
+const canMatchAllows = (route: CoreRouteConfig, pathname: string): boolean => {
+  if (route.canMatch == null) return true;
+  const list = Array.isArray(route.canMatch) ? route.canMatch : [route.canMatch];
+  for (const hook of list) {
+    if (typeof hook !== 'function') continue;
+    try {
+      const result = hook(pathname, route);
+      if (result === false) return false;
+      if (result && typeof result === 'object' && 'allowed' in result && result.allowed === false) {
+        return false;
+      }
+    } catch {
+      // Async or context-shaped hooks are enforced as guards, not during matching.
+    }
+  }
+  return true;
+};
+
+export const matchRoute = <T extends CoreRouteConfig>(
+  routes: T[],
   pathname: string,
   parentPath = ''
-): MatchResult => {
+): MatchResult<T> => {
   for (const route of routes) {
     const fullPath = joinPaths(parentPath, route.path);
     const { matched, params } = matchPath(fullPath, pathname);
     
-    if (matched) {
+    if (matched && canMatchAllows(route, pathname)) {
       if (route.children && route.children.length > 0) {
-        const childMatch = matchRoute(route.children, pathname, fullPath);
+        const childMatch = matchRoute(route.children as T[], pathname, fullPath);
         if (childMatch) {
           return {
             route: childMatch.route,
@@ -169,7 +187,7 @@ export const resolvePath = (
 export const createRouteContext = (
   path: string,
   params: RouteParams = {},
-  route?: RouteConfig,
+  route?: CoreRouteConfig,
   state?: unknown
 ): RouteContext => {
   const { pathname, query, hash } = parsePath(path);
@@ -184,35 +202,35 @@ export const createRouteContext = (
   };
 };
 
-export const flattenRoutes = (
-  routes: RouteConfig[],
+export const flattenRoutes = <T extends CoreRouteConfig>(
+  routes: T[],
   parentPath = ''
-): Array<RouteConfig & { fullPath: string }> => {
-  const result: Array<RouteConfig & { fullPath: string }> = [];
+): Array<T & { fullPath: string }> => {
+  const result: Array<T & { fullPath: string }> = [];
   
   for (const route of routes) {
     const fullPath = joinPaths(parentPath, route.path);
     result.push({ ...route, fullPath });
     
     if (route.children) {
-      result.push(...flattenRoutes(route.children, fullPath));
+      result.push(...flattenRoutes(route.children as T[], fullPath));
     }
   }
   
   return result;
 };
 
-export const findRouteByName = (
-  routes: RouteConfig[],
+export const findRouteByName = <T extends CoreRouteConfig>(
+  routes: T[],
   name: string
-): RouteConfig | null => {
+): T | null => {
   for (const route of routes) {
     if (route.name === name) {
       return route;
     }
     
     if (route.children) {
-      const found = findRouteByName(route.children, name);
+      const found = findRouteByName(route.children as T[], name);
       if (found) return found;
     }
   }

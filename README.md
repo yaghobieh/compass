@@ -2,6 +2,8 @@
 
 Type-safe routing with guards, loaders, actions, middleware, and SSR support.
 
+React is the default. Vue, Angular, and Svelte use their own entry points.
+
 [![npm version](https://img.shields.io/npm/v/@forgedevstack/forge-compass.svg)](https://www.npmjs.com/package/@forgedevstack/forge-compass)
 [![bundle size](https://img.shields.io/bundlephobia/minzip/@forgedevstack/forge-compass)](https://bundlephobia.com/package/@forgedevstack/forge-compass)
 
@@ -21,6 +23,8 @@ Type-safe routing with guards, loaders, actions, middleware, and SSR support.
 - **Parallel Routes** - Multiple concurrent views
 - **Route Search** - Fuzzy search and command palette
 - **SSR Support** - Server-side rendering utilities
+- **One-shot routes** - `createRoute` from a path, an object, or a single string
+- **Vue, Angular, and Svelte** - Optional adapters that share the Compass history router
 
 ## Installation
 
@@ -106,6 +110,185 @@ function UserProfile() {
   );
 }
 ```
+
+## createRoute
+
+`createRoute` has three call shapes. The string and object forms use the same parser for React, Vue, Angular, and Svelte.
+
+### Path and component
+
+```ts
+import { createRoute } from '@forgedevstack/forge-compass';
+
+const route = createRoute('/users/:id', UserPage, { name: 'user' });
+```
+
+### Object
+
+```ts
+const route = createRoute({
+  name: 'auth',
+  fn: 'requireUser',
+  path: '/auth/:id',
+  component: UserPage,
+});
+```
+
+`fn` is a guard or loader name, or a guard function. On the string form it is always a name.
+
+### String
+
+Fields, in order: **name**, **fn**, **path** (must start with `/`), **component**. Angle brackets around the component name are optional.
+
+```ts
+import { registerComponent, resolveRouteComponents } from '@forgedevstack/forge-compass';
+
+registerComponent('UserPage', UserPage);
+
+const route = createRoute('auth requireUser /auth/:id <UserPage>');
+// { name: 'auth', fn: 'requireUser', path: '/auth/:id', component: UserPage }
+```
+
+`UserPage` without brackets is the same component field. A name that is not in the registry stays on the route as a string and is resolved when the view renders. Call `resolveRouteComponents(routes)` to resolve names before you pass routes to the router. `getComponent(name)` reads one registration.
+
+```ts
+createRoute('auth requireUser /auth/:id UserPage');
+```
+
+A string that does not match `name fn /path Component` throws.
+
+## Vue
+
+`vue` is an optional peer. This entry does not depend on another Vue routing package.
+
+```bash
+npm install @forgedevstack/forge-compass vue
+```
+
+```ts
+import { createApp } from 'vue';
+import { createCompassRouter, CompassView, CompassLink, useRoute, useParams } from '@forgedevstack/forge-compass/vue';
+
+const router = createCompassRouter([
+  { path: '/', component: Home },
+  {
+    path: '/users/:id',
+    component: UserLayout,
+    beforeEnter: () => ({ allowed: true }),
+    children: [{ path: '', component: UserPage }],
+  },
+]);
+
+const app = createApp(App);
+app.use(router);
+app.mount('#app');
+```
+
+`beforeEnter` is mapped onto Compass guards (a function, a guard, a guard name, or a list). Put `CompassView` where the matched component should render. A `CompassView` inside that component renders the next child. `CompassLink` takes a `to` prop. `useRoute` and `useParams` read the current match.
+
+## Angular
+
+`@angular/core` is an optional peer. Compass keeps its own history router. `provideCompassRouter(routes)` registers that router. `createRoute` is re-exported from this entry.
+
+```bash
+npm install @forgedevstack/forge-compass @angular/core
+```
+
+```ts
+import { Component, Directive, Input } from '@angular/core';
+import { bootstrapApplication } from '@angular/platform-browser';
+import {
+  CompassLink,
+  CompassOutlet,
+  canActivate,
+  canActivateChild,
+  canDeactivate,
+  canMatch,
+  createRoute,
+  provideCompassRouter,
+  resolve,
+} from '@forgedevstack/forge-compass/angular';
+
+const routes = [
+  createRoute({ name: 'home', fn: 'public', path: '/', component: HomeComponent }),
+  {
+    path: '/admin',
+    canActivate: [canActivate(() => true)],
+    canActivateChild: [canActivateChild(() => true)],
+    canDeactivate: [canDeactivate(() => true)],
+    canMatch: [canMatch(() => true)],
+    resolve: { title: resolve(() => 'Admin') },
+    loadComponent: () => import('./admin').then((mod) => mod.AdminComponent),
+  },
+];
+
+bootstrapApplication(AppComponent, {
+  providers: [provideCompassRouter(routes)],
+});
+
+@Component({
+  selector: 'compass-outlet',
+  standalone: true,
+  template: '<ng-container *ngComponentOutlet="activeComponent"></ng-container>',
+})
+export class AppOutlet extends CompassOutlet {}
+
+@Directive({
+  selector: 'a[compassLink]',
+  standalone: true,
+  host: { '(click)': 'onClick($event)' },
+})
+export class AppLink extends CompassLink {
+  @Input() override to = '';
+  @Input() override replace = false;
+}
+```
+
+Declare the selector in your app. The package ships the controller classes (`CompassOutlet`, `CompassLink`) and the metadata objects `compassOutletMeta` and `compassLinkMeta`. `CompassOutlet.activeComponent` is the matched class after `loadComponent` runs. `CompassOutlet.data` holds `resolve` results. Nested outlets set `depth` (`0` at the root).
+
+Guard helpers: `canActivate`, `canActivateChild`, `canDeactivate`, `canMatch`, and `resolve`.
+
+## Svelte
+
+`svelte` is an optional peer. The package build does not compile `.svelte` files, so this entry is a client controller. There is no file-based page routing.
+
+```bash
+npm install @forgedevstack/forge-compass svelte
+```
+
+```svelte
+<script>
+  import { onDestroy, onMount } from 'svelte';
+  import { Link, Outlet, Route, createCompassRouter } from '@forgedevstack/forge-compass/svelte';
+  import Home from './Home.svelte';
+
+  const router = createCompassRouter([
+    Route({
+      path: '/',
+      name: 'home',
+      component: Home,
+      loader: async ({ params }) => ({ params }),
+    }),
+  ]);
+
+  const link = Link(router);
+  const outlet = Outlet(router);
+  let host;
+  let stop = () => {};
+
+  onMount(() => {
+    stop = outlet.mount(host);
+  });
+  onDestroy(() => stop());
+</script>
+
+<a {...link.props('/')}>Home</a>
+<div bind:this={host}></div>
+```
+
+`router.getParams()` returns the current params. `router.getLoaderData(name)` returns loader data after navigation. Guards use the same `guards` list as React, and a function `fn` is added to that list.
+
+`Outlet(router, depth).subscribe((view) => { ... })` is the component contract when you render the matched component yourself. `view` is `{ component, params, route, context }`. `mount` renders into an element. A component is mounted when it can be constructed with `{ target, props }` and `$destroy`, or when it exposes `mount(target, props)`.
 
 ## Guards
 
